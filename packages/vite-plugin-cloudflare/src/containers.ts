@@ -1,10 +1,30 @@
 import path from "node:path";
-import { getDevContainerImageName } from "@cloudflare/containers-shared/src/knobs";
 import {
+	configureOpenAPIForContainerPull,
+	getDevContainerImageName,
+} from "@cloudflare/containers-shared";
+import {
+	COMPLIANCE_REGION_CONFIG_UNKNOWN,
+	getCloudflareApiBaseUrl,
 	isDockerfile,
 	resolveContainerClassName,
 } from "@cloudflare/workers-utils";
 import type { ResolvedWorkerConfig } from "./plugin-config";
+import type { ComplianceConfig } from "@cloudflare/workers-utils";
+
+export function configureContainerPull(
+	accountId: string,
+	apiToken: string,
+	complianceConfig?: ComplianceConfig
+): void {
+	configureOpenAPIForContainerPull(
+		accountId,
+		apiToken,
+		getCloudflareApiBaseUrl(
+			complianceConfig ?? COMPLIANCE_REGION_CONFIG_UNKNOWN
+		)
+	);
+}
 
 /**
  * Returns the path to the Docker executable as defined by the

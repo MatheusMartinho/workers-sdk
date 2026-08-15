@@ -7,6 +7,13 @@ import { mockConsoleMethods } from "./../helpers/mock-console";
 import { msw } from "./../helpers/msw";
 import { runWrangler } from "./../helpers/run-wrangler";
 
+vi.mock("getConfigCache", () => {
+	return {
+		account_id: "original-account-id",
+		project_name: "an-existing-project",
+	};
+});
+
 describe("pages project create", () => {
 	const std = mockConsoleMethods();
 
@@ -186,12 +193,6 @@ describe("pages project create", () => {
 				{ once: true }
 			)
 		);
-		vi.mock("getConfigCache", () => {
-			return {
-				account_id: "original-account-id",
-				project_name: "an-existing-project",
-			};
-		});
 		vi.stubEnv("CLOUDFLARE_ACCOUNT_ID", "new-account-id");
 		await runWrangler(
 			"pages project create an-existing-project --production-branch=main --compatibility-date 2022-03-08"

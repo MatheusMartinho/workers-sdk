@@ -9,6 +9,13 @@ import { runWrangler } from "./../helpers/run-wrangler";
 import type { Project } from "./../../pages/types";
 import type { ExpectStatic } from "vitest";
 
+vi.mock("getConfigCache", () => {
+	return {
+		account_id: "original-account-id",
+		project_name: "an-existing-project",
+	};
+});
+
 describe("pages project list", () => {
 	runInTempDir();
 	const std = mockConsoleMethods();
@@ -83,12 +90,6 @@ describe("pages project list", () => {
 	it("should override cached accountId with CLOUDFLARE_ACCOUNT_ID environmental variable if provided", async ({
 		expect,
 	}) => {
-		vi.mock("getConfigCache", () => {
-			return {
-				account_id: "original-account-id",
-				project_name: "an-existing-project",
-			};
-		});
 		vi.stubEnv("CLOUDFLARE_ACCOUNT_ID", "new-account-id");
 		const requests = mockProjectListRequest(expect, [], "new-account-id");
 		await runWrangler("pages project list");

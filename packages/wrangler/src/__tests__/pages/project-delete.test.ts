@@ -9,6 +9,13 @@ import { useMockIsTTY } from "../helpers/mock-istty";
 import { msw } from "../helpers/msw";
 import { runWrangler } from "../helpers/run-wrangler";
 
+vi.mock("getConfigCache", () => {
+	return {
+		account_id: "original-account-id",
+		project_name: "an-existing-project",
+	};
+});
+
 describe("pages project delete", () => {
 	const std = mockConsoleMethods();
 
@@ -150,12 +157,6 @@ describe("pages project delete", () => {
 		mockConfirm({
 			text: `Are you sure you want to delete "an-existing-project"? This action cannot be undone.`,
 			result: true,
-		});
-		vi.mock("getConfigCache", () => {
-			return {
-				account_id: "original-account-id",
-				project_name: "an-existing-project",
-			};
 		});
 		vi.stubEnv("CLOUDFLARE_ACCOUNT_ID", "new-account-id");
 		await runWrangler("pages project delete an-existing-project");

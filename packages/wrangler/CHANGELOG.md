@@ -1,5 +1,84 @@
 # wrangler
 
+## 4.124.0
+
+### Minor Changes
+
+- [#15026](https://github.com/cloudflare/workers-sdk/pull/15026) [`6529f0c`](https://github.com/cloudflare/workers-sdk/commit/6529f0ca5ecda93f67efbaa72a7f9a9f8fd814bf) Thanks [@petebacondarwin](https://github.com/petebacondarwin)! - Allow containers to be attached to a Durable Object from its `exports` entry
+
+  A container can now be linked to its Durable Object from the export side, using a new `container` field that names an entry in the `containers` array. As a result `containers[].class_name` is now optional — a container that is referenced this way only needs a `name`:
+
+  ```jsonc
+  {
+    "name": "my-worker",
+    "main": "worker.js",
+    "compatibility_date": "2026-07-01",
+    "containers": [
+      { "name": "my-container", "image": "./Dockerfile", "max_instances": 1 }
+    ],
+    "exports": {
+      "MyContainerDO": {
+        "type": "durable-object",
+        "storage": "sqlite",
+        "container": "my-container"
+      }
+    }
+  }
+  ```
+
+  The existing `containers[].class_name` direction keeps working and either direction may be used, but the two must agree: a container that names its Durable Object cannot also be claimed by a different one.
+
+  `container` is only valid on live `durable-object` exports (`created` and `expecting-transfer`) and requires `storage: "sqlite"`. Wrangler now also reports an error when:
+
+  - a `container` reference names a container that does not exist
+  - two Durable Object exports claim the same container
+  - a container and a Durable Object export disagree about which one they are linked to
+  - a container ends up linked to no Durable Object at all
+  - two containers share a `name`
+  - a container's `class_name` names a Durable Object whose `storage` is `legacy-kv`
+  - two containers are attached to the same Durable Object
+
+  That last case was previously accepted but could never work: workerd attaches a single container per Durable Object namespace, and in local development every container for a class builds into the same image tag, so one silently overwrote the other. If you have two containers on one `class_name`, give each its own Durable Object class.
+
+### Patch Changes
+
+- [#15044](https://github.com/cloudflare/workers-sdk/pull/15044) [`b7422b0`](https://github.com/cloudflare/workers-sdk/commit/b7422b0a8a2e74bba068a1924992dcfeff0bd126) Thanks [@stareezy-1](https://github.com/stareezy-1)! - Normalize structural CRLF line endings before sending D1 commands to the remote query API
+
+  `wrangler d1 migrations apply --remote` and `wrangler d1 execute --remote --command` failed with `incomplete input: SQLITE_ERROR` when the SQL contained CRLF line endings inside a compound statement such as a `CREATE TRIGGER ... BEGIN ... END;` body. Structural line endings are now normalized to LF before the command is sent to the D1 query API, while CRLF inside quoted values and identifiers remains unchanged.
+
+- [#15046](https://github.com/cloudflare/workers-sdk/pull/15046) [`186339c`](https://github.com/cloudflare/workers-sdk/commit/186339cf854cf3522614fb686ec66e6682c569b8) Thanks [@erwinzhang7](https://github.com/erwinzhang7)! - Fixes D1 SQL statements not handling lowercase `end`s correctly
+
+  `wrangler d1 execute` and `wrangler d1 migrations apply` split a SQL file into statements before running them. A `BEGIN` or `CASE` block closed with a lowercase `end` was not recognised as closed, so every statement after it was folded into that block instead of being run on its own. SQLite accepts either case, so a file like this applied only the trigger and silently skipped the table:
+
+  ```sql
+  CREATE TRIGGER IF NOT EXISTS update_trigger AFTER UPDATE ON items
+  begin
+  	DELETE FROM updates WHERE item_id=old.id;
+  end;
+  CREATE TABLE after_the_trigger (id TEXT PRIMARY KEY);
+  ```
+
+  Files written with an uppercase `END` were unaffected. Both cases now behave the same.
+
+- [#15185](https://github.com/cloudflare/workers-sdk/pull/15185) [`1f79ace`](https://github.com/cloudflare/workers-sdk/commit/1f79ace67a81633e34dae47a666468fcdaf93f41) Thanks [@jamesopstad](https://github.com/jamesopstad)! - Resolve `--latest` to the newest compatibility date supported by the installed runtime
+
+  `wrangler deploy --latest` and `wrangler versions upload --latest` resolved the compatibility date to the current date, and `wrangler pages download config` did the same for projects configured to always use the latest compatibility date. Both write that date into a configuration file for subsequent commands to use, so a date that the installed `workerd` did not yet support left the project unable to run `wrangler dev`.
+
+  These now resolve to the latest compatibility date supported by this version of Wrangler, which is the release date of the `workerd` it ships with.
+
+- [#15151](https://github.com/cloudflare/workers-sdk/pull/15151) [`49f73de`](https://github.com/cloudflare/workers-sdk/commit/49f73de207124171b3f8e9ffb182facb48727388) Thanks [@maximilliangrand](https://github.com/maximilliangrand)! - Fix spurious `Trailing comma jsonc(519)` warnings for `wrangler.jsonc` in VS Code 1.131+
+
+  Trailing commas in `wrangler.jsonc` files that reference Wrangler's JSON schema are no longer reported as errors by recent versions of VS Code. Wrangler always accepted these files; only the editor warning was wrong.
+
+- [#15185](https://github.com/cloudflare/workers-sdk/pull/15185) [`1f79ace`](https://github.com/cloudflare/workers-sdk/commit/1f79ace67a81633e34dae47a666468fcdaf93f41) Thanks [@jamesopstad](https://github.com/jamesopstad)! - Use a fixed default compatibility date rather than the current date
+
+  When no compatibility date was set, Wrangler, C3 and the Vitest pool all defaulted to the current date. `workerd` only accepts a compatibility date up to 7 days beyond its own release, so whenever a `workerd` release was delayed the default could get ahead of the runtime that had been installed, and local development would fail to start.
+
+  The default is now fixed at the release date of the `workerd` version that ships with each release, which leaves a week of headroom and updates as `workerd` is upgraded. `@cloudflare/vite-plugin` previously inlined the date at which it was built. It now shares the same default.
+
+- Updated dependencies [[`2e0c962`](https://github.com/cloudflare/workers-sdk/commit/2e0c962da0c57bdc79b5edcaa64c7b725c1524f0)]:
+  - miniflare@5.20260811.2-alpha
+
 ## 4.123.0
 
 ### Minor Changes

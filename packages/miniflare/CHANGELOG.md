@@ -1,5 +1,11 @@
 # miniflare
 
+## 5.20260811.2-alpha
+
+### Patch Changes
+
+- [#15143](https://github.com/cloudflare/workers-sdk/pull/15143) [`2e0c962`](https://github.com/cloudflare/workers-sdk/commit/2e0c962da0c57bdc79b5edcaa64c7b725c1524f0) Thanks [@teamleaderleo](https://github.com/teamleaderleo)! - Prevent `workerd` from remaining running during Miniflare shutdown when browser or proxy cleanup is slow or fails.
+
 ## 5.20260811.1-alpha
 
 ### Minor Changes

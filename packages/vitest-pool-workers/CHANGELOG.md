@@ -1,5 +1,31 @@
 # @cloudflare/vitest-pool-workers
 
+## 0.22.0
+
+### Minor Changes
+
+- [#13830](https://github.com/cloudflare/workers-sdk/pull/13830) [`49d4e00`](https://github.com/cloudflare/workers-sdk/commit/49d4e0096802fb4d5ff2fe7277c893065dfa8c86) Thanks [@penalosa](https://github.com/penalosa)! - Mocking requests with MSW in Worker tests now requires MSW >= 2.14
+
+  `@cloudflare/vitest-pool-workers` previously shipped internal shims to make MSW work inside the workerd runtime. MSW 2.14 added that support natively, so those shims have been removed.
+
+  If you mock requests with MSW in your Worker tests, make sure you're on MSW `>= 2.14`; older versions will no longer intercept requests. You can keep using `setupServer()` from `msw/node`, or adopt the official [`@msw/cloudflare`](https://github.com/mswjs/cloudflare) integration via `setupNetwork()`. See the updated [`request-mocking` example fixture](https://github.com/cloudflare/workers-sdk/tree/main/fixtures/vitest-pool-workers-examples/request-mocking) for the recommended pattern.
+
+### Patch Changes
+
+- [#15150](https://github.com/cloudflare/workers-sdk/pull/15150) [`2cf3143`](https://github.com/cloudflare/workers-sdk/commit/2cf314322c046a0e11ddedda0230cd44adda29a9) Thanks [@kkkhs](https://github.com/kkkhs)! - Restore typed `inject()` keys in `cloudflareTest()` pool options
+
+  `inject()` inside `cloudflareTest()` options again infers the value type from the keys you declare in your Vitest `ProvidedContext`, and reports misspelled keys. For keys that are only provided at runtime, pass an explicit type argument, e.g. `inject<number>("myPort")`.
+
+- [#15185](https://github.com/cloudflare/workers-sdk/pull/15185) [`1f79ace`](https://github.com/cloudflare/workers-sdk/commit/1f79ace67a81633e34dae47a666468fcdaf93f41) Thanks [@jamesopstad](https://github.com/jamesopstad)! - Use a fixed default compatibility date rather than the current date
+
+  When no compatibility date was set, Wrangler, C3 and the Vitest pool all defaulted to the current date. `workerd` only accepts a compatibility date up to 7 days beyond its own release, so whenever a `workerd` release was delayed the default could get ahead of the runtime that had been installed, and local development would fail to start.
+
+  The default is now fixed at the release date of the `workerd` version that ships with each release, which leaves a week of headroom and updates as `workerd` is upgraded. `@cloudflare/vite-plugin` previously inlined the date at which it was built. It now shares the same default.
+
+- Updated dependencies [[`6529f0c`](https://github.com/cloudflare/workers-sdk/commit/6529f0ca5ecda93f67efbaa72a7f9a9f8fd814bf), [`b7422b0`](https://github.com/cloudflare/workers-sdk/commit/b7422b0a8a2e74bba068a1924992dcfeff0bd126), [`186339c`](https://github.com/cloudflare/workers-sdk/commit/186339cf854cf3522614fb686ec66e6682c569b8), [`2e0c962`](https://github.com/cloudflare/workers-sdk/commit/2e0c962da0c57bdc79b5edcaa64c7b725c1524f0), [`1f79ace`](https://github.com/cloudflare/workers-sdk/commit/1f79ace67a81633e34dae47a666468fcdaf93f41), [`49f73de`](https://github.com/cloudflare/workers-sdk/commit/49f73de207124171b3f8e9ffb182facb48727388), [`1f79ace`](https://github.com/cloudflare/workers-sdk/commit/1f79ace67a81633e34dae47a666468fcdaf93f41)]:
+  - wrangler@4.124.0
+  - miniflare@5.20260811.2-alpha
+
 ## 0.21.3
 
 ### Patch Changes
